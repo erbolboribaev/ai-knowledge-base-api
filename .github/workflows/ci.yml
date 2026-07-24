@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: knowledge_base_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Kodni olish
+        uses: actions/checkout@v4
+
+      - name: Python o'rnatish
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: pip keshini ishlatish
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - name: pgvector kengaytmasini yoqish
+        run: |
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=password psql -h localhost -U postgres -d knowledge_base_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: CPU-versiyali torch o'rnatish (tezroq, kichikroq)
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Bog'liqliklarni o'rnatish
+        run: pip install -r requirements.txt
+
+      - name: Testlarni ishga tushirish
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/knowledge_base_test
+          DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/knowledge_base_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: ci-test-secret-key
+          GROQ_API_KEY: dummy-key-for-ci
+        run: pytest tests/ -v
