@@ -150,6 +150,8 @@ pytest tests/ -v
 Tests require a separate test database, configurable via the `TEST_DATABASE_URL` environment variable. Rate limiting is disabled automatically during test runs.
 
 ## Project Structure
+```
+
 
 app/
 ├── api/v1/ # Route handlers (auth, documents, chat)
@@ -162,6 +164,8 @@ app/
 tests/ # pytest test suite
 alembic/ # Database migrations
 docker/ # Dockerfile and docker-compose.yml
+```
+
 ## License
 
 MIT
