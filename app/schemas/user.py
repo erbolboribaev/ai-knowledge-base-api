@@ -31,6 +31,18 @@ class UserResponse(BaseModel):
 
 
 class Token(BaseModel):
-    """Login muvaffaqiyatli bo'lganda qaytariladigan JWT token"""
+    """Login muvaffaqiyatli bo'lganda qaytariladigan JWT tokenlar"""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class RefreshRequest(BaseModel):
+    """Yangi access token olish uchun yuboriladigan refresh token"""
+    refresh_token: str
+
+
+class AccessTokenResponse(BaseModel):
+    """Refresh orqali qaytariladigan yangi access token"""
     access_token: str
     token_type: str = "bearer"

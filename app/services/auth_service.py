@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 
 from app.models.user import User
 from app.schemas.user import UserCreate
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 
 
 async def register_user(db: AsyncSession, user_data: UserCreate) -> User:
@@ -49,6 +49,34 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
     return user
 
 
-def create_token_for_user(user: User) -> str:
-    """Foydalanuvchi uchun JWT token yaratadi"""
+def create_token_for_user(user: User) -> tuple[str, str]:
+    """Foydalanuvchi uchun access va refresh tokenlarni birga yaratadi"""
+    access_token = create_access_token(subject=str(user.id))
+    refresh_token = create_refresh_token(subject=str(user.id))
+    return access_token, refresh_token
+
+
+async def refresh_access_token(db: AsyncSession, refresh_token: str) -> str:
+    """
+    Refresh token orqali yangi access token yaratadi.
+    Refresh token yaroqsiz, muddati o'tgan, yoki foydalanuvchi endi
+    mavjud/faol bo'lmasa - 401 qaytaradi.
+    """
+    user_id = decode_token(refresh_token, expected_type="refresh")
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token yaroqsiz yoki muddati o'tgan",
+        )
+
+    import uuid
+    result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+    user = result.scalar_one_or_none()
+
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Foydalanuvchi topilmadi yoki faol emas",
+        )
+
     return create_access_token(subject=str(user.id))

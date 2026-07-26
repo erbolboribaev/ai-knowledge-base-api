@@ -7,6 +7,11 @@ from sqlalchemy.pool import NullPool
 from app.main import app
 from app.db.base import Base
 from app.db.session import get_db
+from app.core.limiter import limiter
+
+# Testlarda rate limiting o'chiriladi - aks holda ko'p test bir xil
+# "IP" (127.0.0.1) orqali tez ishlagani uchun limitga tez tegib qoladi
+limiter.enabled = False
 
 import os
 TEST_DATABASE_URL = os.getenv(

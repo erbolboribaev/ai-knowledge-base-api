@@ -84,3 +84,38 @@ async def test_get_nonexistent_document_returns_404(client):
     fake_id = "00000000-0000-0000-0000-000000000000"
     response = await client.get(f"/api/v1/documents/{fake_id}", headers=headers)
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_own_document_succeeds(client):
+    """Foydalanuvchi o'z hujjatini o'chira olishi kerak"""
+    headers = await _register_and_login(client, email="delete_test@example.com")
+    upload_response = await client.post(
+        "/api/v1/documents/",
+        json={"filename": "to_delete.txt", "content": "O'chiriladigan matn"},
+        headers=headers,
+    )
+    document_id = upload_response.json()["id"]
+
+    delete_response = await client.delete(f"/api/v1/documents/{document_id}", headers=headers)
+    assert delete_response.status_code == 204
+
+    get_response = await client.get(f"/api/v1/documents/{document_id}", headers=headers)
+    assert get_response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_other_users_document_forbidden(client):
+    """Boshqa foydalanuvchining hujjatini o'chirishga urinish 403 qaytarishi kerak"""
+    headers_owner = await _register_and_login(client, email="delete_owner@example.com")
+    headers_intruder = await _register_and_login(client, email="delete_intruder@example.com")
+
+    upload_response = await client.post(
+        "/api/v1/documents/",
+        json={"filename": "protected.txt", "content": "Himoyalangan matn"},
+        headers=headers_owner,
+    )
+    document_id = upload_response.json()["id"]
+
+    response = await client.delete(f"/api/v1/documents/{document_id}", headers=headers_intruder)
+    assert response.status_code == 403

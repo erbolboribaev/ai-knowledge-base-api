@@ -68,3 +68,22 @@ async def get_document(
         raise HTTPException(status_code=403, detail="Bu hujjatga ruxsatingiz yo'q")
 
     return document
+
+
+@router.delete("/{document_id}", status_code=204)
+async def delete_document(
+    document_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Hujjatni o'chiradi - faqat egasi o'chira oladi. Bog'liq chunk'lar ham avtomatik o'chadi (cascade)."""
+    result = await db.execute(select(Document).where(Document.id == document_id))
+    document = result.scalar_one_or_none()
+
+    if not document:
+        raise HTTPException(status_code=404, detail="Hujjat topilmadi")
+    if document.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Bu hujjatga ruxsatingiz yo'q")
+
+    await db.delete(document)
+    await db.commit()

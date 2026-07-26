@@ -68,3 +68,71 @@ async def test_login_with_nonexistent_user_fails(client):
         data={"username": "doesnotexist@example.com", "password": "anypass"},
     )
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_login_returns_both_tokens(client):
+    """Login javobida access_token va refresh_token ikkalasi ham bo'lishi kerak"""
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": "tokens_test@example.com", "password": "testpass123"},
+    )
+    response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "tokens_test@example.com", "password": "testpass123"},
+    )
+    data = response.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+    assert data["access_token"] != data["refresh_token"]
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_returns_new_access_token(client):
+    """To'g'ri refresh token orqali yangi access token olinishi kerak"""
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": "refresh_test@example.com", "password": "testpass123"},
+    )
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "refresh_test@example.com", "password": "testpass123"},
+    )
+    refresh_token = login_response.json()["refresh_token"]
+
+    response = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": refresh_token}
+    )
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+
+
+@pytest.mark.asyncio
+async def test_refresh_with_invalid_token_fails(client):
+    """Yaroqsiz refresh token 401 qaytarishi kerak"""
+    response = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": "yaroqsiz.token.bumasi"}
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_with_access_token_fails(client):
+    """
+    Access token'ni refresh token o'rniga ishlatishga urinish rad etilishi kerak -
+    tokenlar ichidagi 'type' claim'i buni oldini oladi.
+    """
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": "wrong_token_type@example.com", "password": "testpass123"},
+    )
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "wrong_token_type@example.com", "password": "testpass123"},
+    )
+    access_token = login_response.json()["access_token"]
+
+    response = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": access_token}
+    )
+    assert response.status_code == 401
