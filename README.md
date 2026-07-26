@@ -6,12 +6,13 @@ A Retrieval-Augmented Generation (RAG) API for building searchable, question-ans
 
 ## Features
 
-- JWT-based authentication with secure password hashing (bcrypt)
-- Document management with per-user access control
+- JWT-based authentication with access and refresh tokens, and secure password hashing (bcrypt)
+- Document management with per-user access control (upload, list, view, delete)
 - Asynchronous document processing (chunking + embedding) via Celery
 - Semantic vector search using PostgreSQL + pgvector
 - RAG-based chat endpoint using Groq LLM, grounded strictly in uploaded documents, with source attribution
-- 13 automated tests covering authentication, authorization, and the full RAG pipeline (LLM calls are mocked)
+- Rate limiting on authentication and chat endpoints to prevent abuse
+- 19 automated tests covering authentication, authorization, and the full RAG pipeline (LLM calls are mocked)
 - Fully containerized: API, worker, PostgreSQL, and Redis run with a single `docker compose up`
 - CI pipeline via GitHub Actions running the full test suite on every push
 
@@ -19,7 +20,7 @@ A Retrieval-Augmented Generation (RAG) API for building searchable, question-ans
 Client
 |
 v
-FastAPI (JWT-protected)
+FastAPI (JWT-protected, rate-limited)
 |
 |--> Upload document --> PostgreSQL (status: pending)
 | |
@@ -53,7 +54,8 @@ Answer returned with sources
 | ORM | SQLAlchemy 2.0 (async) |
 | Database | PostgreSQL + pgvector |
 | Background tasks | Celery + Redis |
-| Authentication | JWT (python-jose) + bcrypt |
+| Authentication | JWT (python-jose, access + refresh tokens) + bcrypt |
+| Rate limiting | slowapi |
 | Embeddings | sentence-transformers (all-MiniLM-L6-v2) |
 | LLM | Groq (llama-3.3-70b-versatile) |
 | Migrations | Alembic |
@@ -104,6 +106,14 @@ curl -X POST http://localhost:8000/api/v1/auth/register \
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -d "username=user@example.com&password=securepass123"
 ```
+Returns both an `access_token` (short-lived) and a `refresh_token` (long-lived).
+
+### Refresh access token
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token": "<REFRESH_TOKEN>"}'
+```
 
 ### Upload a document
 ```bash
@@ -111,6 +121,12 @@ curl -X POST http://localhost:8000/api/v1/documents/ \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"filename": "company_policy.txt", "content": "..."}'
+```
+
+### Delete a document
+```bash
+curl -X DELETE http://localhost:8000/api/v1/documents/<DOCUMENT_ID> \
+  -H "Authorization: Bearer <TOKEN>"
 ```
 
 ### Ask a question (RAG)
@@ -121,6 +137,17 @@ curl -X POST http://localhost:8000/api/v1/chat/ask \
   -d '{"question": "What is the company policy about?"}'
 ```
 
+## Rate Limits
+
+| Endpoint | Limit |
+|---|---|
+| `POST /auth/register` | 5 per minute |
+| `POST /auth/login` | 10 per minute |
+| `POST /auth/refresh` | 20 per minute |
+| `POST /chat/ask` | 20 per minute |
+
+Limits are keyed by client IP address.
+
 ## Running Tests
 
 ```bash
@@ -128,12 +155,12 @@ pip install -r requirements.txt
 pytest tests/ -v
 ```
 
-Tests require a separate test database, configurable via the `TEST_DATABASE_URL` environment variable.
+Tests require a separate test database, configurable via the `TEST_DATABASE_URL` environment variable. Rate limiting is disabled automatically during test runs.
 
 ## Project Structure
 app/
 ├── api/v1/ # Route handlers (auth, documents, chat)
-├── core/ # Settings, security, logging
+├── core/ # Settings, security, rate limiting, logging
 ├── db/ # Database engine and session management
 ├── models/ # SQLAlchemy models
 ├── schemas/ # Pydantic request/response schemas
