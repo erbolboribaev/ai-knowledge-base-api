@@ -17,35 +17,24 @@ A Retrieval-Augmented Generation (RAG) API for building searchable, question-ans
 - CI pipeline via GitHub Actions running the full test suite on every push
 
 ## Architecture
-Client
-|
-v
-FastAPI (JWT-protected, rate-limited)
-|
-|--> Upload document --> PostgreSQL (status: pending)
-| |
-| v
-| Celery task queued via Redis
-| |
-| v
-| Text split into chunks
-| |
-| v
-| Embeddings generated (sentence-transformers)
-| |
-| v
-| Stored in pgvector (status: completed)
-|
-|--> Ask question --> Question embedded
-|
-v
-Nearest chunks retrieved via pgvector
-|
-v
-Context + question sent to Groq LLM
-|
-v
-Answer returned with sources
+
+```mermaid
+flowchart TD
+    A[Client] --> B[FastAPI - JWT protected, rate limited]
+    B --> C[Upload document]
+    C --> D[(PostgreSQL - status: pending)]
+    D --> E[Celery task queued via Redis]
+    E --> F[Text split into chunks]
+    F --> G[Embeddings generated - sentence-transformers]
+    G --> H[(pgvector - status: completed)]
+
+    B --> I[Ask question]
+    I --> J[Question embedded]
+    J --> K[Nearest chunks retrieved via pgvector]
+    K --> L[Context + question sent to Groq LLM]
+    L --> M[Answer returned with sources]
+```
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -91,7 +80,10 @@ docker compose up --build
 This starts PostgreSQL (with pgvector), Redis, the API server, and the Celery worker, and applies database migrations automatically.
 
 4. Open the interactive API docs:
+
 http://localhost:8000/docs
+
+
 ## API Examples
 
 ### Register
@@ -158,6 +150,7 @@ pytest tests/ -v
 Tests require a separate test database, configurable via the `TEST_DATABASE_URL` environment variable. Rate limiting is disabled automatically during test runs.
 
 ## Project Structure
+
 app/
 ├── api/v1/ # Route handlers (auth, documents, chat)
 ├── core/ # Settings, security, rate limiting, logging
