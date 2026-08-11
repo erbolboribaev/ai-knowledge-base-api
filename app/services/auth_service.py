@@ -80,3 +80,35 @@ async def refresh_access_token(db: AsyncSession, refresh_token: str) -> str:
         )
 
     return create_access_token(subject=str(user.id))
+
+
+async def get_or_create_oauth_user(
+    db: AsyncSession, email: str, provider: str, oauth_id: str
+) -> User:
+    """
+    OAuth orqali kirgan foydalanuvchini topadi, yoki mavjud bo'lmasa yangi yaratadi.
+    Agar shu email bilan (parol orqali) hisob allaqachon mavjud bo'lsa, o'sha
+    hisobga OAuth ma'lumotini bog'laydi - shunda foydalanuvchi ikkala usul bilan
+    ham kira oladi.
+    """
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if user:
+        if not user.oauth_provider:
+            user.oauth_provider = provider
+            user.oauth_id = oauth_id
+            await db.commit()
+            await db.refresh(user)
+        return user
+
+    new_user = User(
+        email=email,
+        hashed_password=None,
+        oauth_provider=provider,
+        oauth_id=oauth_id,
+    )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+    return new_user

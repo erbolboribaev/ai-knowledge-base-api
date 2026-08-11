@@ -23,5 +23,7 @@ async def ask_question(
     Foydalanuvchi savol beradi, tizim uning hujjatlaridan eng mos
     bo'lakni topib, LLM orqali javob generatsiya qiladi (RAG).
     """
-    answer, sources = await answer_question(db, current_user.id, chat_request.question)
-    return ChatResponse(answer=answer, sources=sources)
+    answer, sources, web_sources = await answer_question(
+        db, current_user.id, chat_request.question, use_web_search=chat_request.use_web_search
+    )
+    return ChatResponse(answer=answer, sources=sources, web_sources=web_sources)

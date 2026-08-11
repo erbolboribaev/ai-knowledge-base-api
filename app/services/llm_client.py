@@ -43,3 +43,40 @@ Javob:"""
     )
 
     return response.choices[0].message.content.strip()
+
+
+async def describe_image(base64_image: str, mime_type: str = "image/png") -> str:
+    """
+    Rasm/skrinshotni Groq vizual modeli orqali tavsiflaydi va undagi
+    matnni (agar bo'lsa) ajratib oladi. Natija oddiy hujjat matni
+    sifatida ishlatiladi - shu orqali skrinshot ham RAG tizimiga qo'shiladi.
+    """
+    client = get_groq_client()
+
+    response = await client.chat.completions.create(
+        model="meta-llama/llama-4-scout-17b-16e-instruct",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "Describe this image in detail and extract ALL visible text "
+                            "exactly as written. If it's a screenshot of text/document, "
+                            "transcribe the text fully and accurately. Respond with plain "
+                            "text only - no markdown formatting."
+                        ),
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime_type};base64,{base64_image}"},
+                    },
+                ],
+            }
+        ],
+        temperature=0.2,
+        max_tokens=1024,
+    )
+
+    return response.choices[0].message.content.strip()
