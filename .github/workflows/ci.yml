@@ -68,4 +68,5 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: ci-test-secret-key
           GROQ_API_KEY: dummy-key-for-ci
+          TAVILY_API_KEY: dummy-key-for-ci
         run: pytest tests/ -v
