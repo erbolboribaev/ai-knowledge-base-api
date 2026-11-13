@@ -25,6 +25,12 @@ redis==5.2.1
 groq==0.13.1
 sentence-transformers==3.3.1
 
+# PDF + OCR (needs tesseract-ocr and poppler-utils system packages)
+pypdf==5.1.0
+pytesseract==0.3.13
+pdf2image==1.17.0
+pillow==11.0.0
+
 # Testing
 pytest==8.3.4
 pytest-asyncio==0.25.0

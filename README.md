@@ -9,10 +9,14 @@ A Retrieval-Augmented Generation (RAG) API for building searchable, question-ans
 - JWT-based authentication with access and refresh tokens, and secure password hashing (bcrypt)
 - Document management with per-user access control (upload, list, view, delete)
 - Asynchronous document processing (chunking + embedding) via Celery
+- PDF upload with automatic OCR fallback: pages with a text layer are read directly, scanned pages go through Tesseract (per page, so mixed documents are handled efficiently)
+- Image upload (screenshots) transcribed with a vision LLM
+- Built-in RAG evaluation harness (Hit@k, MRR, abstention on out-of-scope questions, optional LLM-as-judge answer accuracy)
+- `/health` endpoint checking PostgreSQL and Redis, wired into the Docker healthcheck
 - Semantic vector search using PostgreSQL + pgvector
 - RAG-based chat endpoint using Groq LLM, grounded strictly in uploaded documents, with source attribution
 - Rate limiting on authentication and chat endpoints to prevent abuse
-- 19 automated tests covering authentication, authorization, and the full RAG pipeline (LLM calls are mocked)
+- Automated tests covering authentication, authorization, the RAG pipeline (LLM calls are mocked), PDF/OCR extraction, and the evaluation metrics
 - Fully containerized: API, worker, PostgreSQL, and Redis run with a single `docker compose up`
 - CI pipeline via GitHub Actions running the full test suite on every push
 
@@ -115,6 +119,14 @@ curl -X POST http://localhost:8000/api/v1/documents/ \
   -d '{"filename": "company_policy.txt", "content": "..."}'
 ```
 
+### Upload a PDF (text or scanned)
+```bash
+curl -X POST "http://localhost:8000/api/v1/documents/from-pdf?ocr_lang=eng" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -F "file=@contract.pdf"
+```
+Validates the file signature (not just the `Content-Type`), limits size (20 MB) and page count (100), and runs extraction in a worker thread so the event loop stays free. `ocr_lang` accepts Tesseract language codes such as `eng`, `rus` or `eng+rus`.
+
 ### Delete a document
 ```bash
 curl -X DELETE http://localhost:8000/api/v1/documents/<DOCUMENT_ID> \
@@ -128,6 +140,25 @@ curl -X POST http://localhost:8000/api/v1/chat/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "What is the company policy about?"}'
 ```
+
+## Evaluating RAG Quality
+
+The `evaluation/` package measures how well retrieval and answering work on a small labeled dataset (`evaluation/dataset.json`: 6 documents, 14 answerable and 4 out-of-scope questions).
+
+```bash
+python -m evaluation.run_eval                 # retrieval only, no API key needed
+python -m evaluation.run_eval --answers       # also generates answers and grades them with an LLM judge
+python -m evaluation.run_eval --chunk-size 60 --top-k 3 --json-out evaluation/results.json
+```
+
+| Metric | Meaning |
+|---|---|
+| Hit@1 / Hit@k | The correct document is the top result / among the top k |
+| MRR | Mean reciprocal rank of the correct document |
+| Abstention rate | Out-of-scope questions for which nothing passes the similarity threshold, so the API answers "no information" instead of hallucinating |
+| Answer accuracy | (`--answers`) LLM judge compares the generated answer with a reference answer |
+
+Retrieval is computed in memory with the same chunker and embedding model as production, so the numbers reflect those settings; use the script to compare chunk sizes, `top_k`, thresholds, or embedding models before changing them.
 
 ## Rate Limits
 
@@ -161,6 +192,7 @@ app/
 ├── schemas/ # Pydantic request/response schemas
 ├── services/ # Business logic (RAG, embeddings, auth)
 └── workers/ # Celery background tasks
+evaluation/ # RAG evaluation dataset, metrics, and runner
 tests/ # pytest test suite
 alembic/ # Database migrations
 docker/ # Dockerfile and docker-compose.yml
