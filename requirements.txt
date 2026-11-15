@@ -45,3 +45,5 @@ slowapi==0.1.9
 tavily-python==0.5.1
 authlib==1.3.2
 itsdangerous==2.2.0
+
+reportlab==4.2.5
