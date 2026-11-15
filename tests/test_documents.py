@@ -119,3 +119,49 @@ async def test_delete_other_users_document_forbidden(client):
 
     response = await client.delete(f"/api/v1/documents/{document_id}", headers=headers_intruder)
     assert response.status_code == 403
+
+
+def _make_pdf_bytes(text: str) -> bytes:
+    import io
+    from reportlab.pdfgen import canvas
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer)
+    pdf.drawString(72, 750, text)
+    pdf.save()
+    return buffer.getvalue()
+
+
+@pytest.mark.asyncio
+async def test_upload_pdf_without_auth_fails(client):
+    response = await client.post(
+        "/api/v1/documents/from-pdf",
+        files={"file": ("a.pdf", _make_pdf_bytes("Some text in the PDF"), "application/pdf")},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_upload_non_pdf_is_rejected(client):
+    headers = await _register_and_login(client, email="pdf_bad@example.com")
+    response = await client.post(
+        "/api/v1/documents/from-pdf",
+        files={"file": ("fake.pdf", b"just plain text, not a pdf", "application/pdf")},
+        headers=headers,
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_upload_pdf_creates_document_with_extracted_text(client):
+    headers = await _register_and_login(client, email="pdf_ok@example.com")
+    response = await client.post(
+        "/api/v1/documents/from-pdf",
+        files={"file": ("policy.pdf", _make_pdf_bytes("Refunds are accepted within thirty days."), "application/pdf")},
+        headers=headers,
+    )
+    assert response.status_code == 201
+    document_id = response.json()["id"]
+
+    detail = await client.get(f"/api/v1/documents/{document_id}", headers=headers)
+    assert "Refunds are accepted" in detail.json()["content"]

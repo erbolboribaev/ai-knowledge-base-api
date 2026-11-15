@@ -25,10 +25,17 @@ redis==5.2.1
 groq==0.13.1
 sentence-transformers==3.3.1
 
+# PDF + OCR (needs tesseract-ocr and poppler-utils system packages)
+pypdf==5.1.0
+pytesseract==0.3.13
+pdf2image==1.17.0
+pillow==11.0.0
+
 # Testing
 pytest==8.3.4
 pytest-asyncio==0.25.0
 httpx==0.28.1
+pytest-cov
 
 # Utilities
 python-dotenv==1.0.1
@@ -38,3 +45,7 @@ slowapi==0.1.9
 tavily-python==0.5.1
 authlib==1.3.2
 itsdangerous==2.2.0
+
+reportlab==4.2.5
+
+kombu==5.6.2

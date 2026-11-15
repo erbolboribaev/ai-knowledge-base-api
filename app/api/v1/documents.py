@@ -1,5 +1,6 @@
 import uuid
 import base64
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -11,8 +12,11 @@ from app.models.document import Document
 from app.schemas.document import DocumentCreate, DocumentResponse, DocumentDetailResponse
 from app.workers.tasks import process_document_task
 from app.services.llm_client import describe_image
+from app.services.pdf_service import extract_text_from_pdf, PdfExtractionError
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
+
+MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024
 
 
 @router.post("/", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
@@ -128,6 +132,55 @@ async def upload_image_document(
         owner_id=current_user.id,
         filename=file.filename or "screenshot.png",
         content=extracted_text,
+    )
+    db.add(document)
+    await db.commit()
+    await db.refresh(document)
+
+    process_document_task.delay(str(document.id))
+
+    return document
+
+
+@router.post("/from-pdf", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
+async def upload_pdf_document(
+    file: UploadFile = File(...),
+    ocr_lang: str = "eng",
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    PDF yuklaydi va matnini ajratib oladi. Matn qatlami bor sahifalar
+    to'g'ridan-to'g'ri o'qiladi, skanerlangan (rasm) sahifalar uchun
+    Tesseract OCR ishlatiladi. Keyin hujjat oddiy matnli hujjat kabi
+    bo'laklarga bo'linib, embedding yaratiladi.
+
+    ocr_lang - Tesseract til kodi (masalan "eng", "rus", "eng+rus").
+    """
+    pdf_bytes = await file.read()
+
+    if len(pdf_bytes) > MAX_PDF_SIZE_BYTES:
+        raise HTTPException(status_code=400, detail="PDF too large (max 20MB).")
+    # Content-Type'ga ishonmaymiz (mijoz yolg'on yuborishi mumkin) - fayl boshini tekshiramiz
+    if not pdf_bytes.startswith(b"%PDF"):
+        raise HTTPException(status_code=400, detail="File is not a valid PDF.")
+    # Tesseract'ga faqat "eng", "rus", "eng+rus" ko'rinishidagi qiymat o'tishi uchun
+    if not ocr_lang.replace("+", "").replace("_", "").isalnum():
+        raise HTTPException(status_code=400, detail="Invalid ocr_lang value.")
+
+    try:
+        # PDF o'qish va OCR - CPU'ni band qiladi, shuning uchun event loop'ni bloklamaslik uchun thread'da
+        result = await asyncio.to_thread(extract_text_from_pdf, pdf_bytes, ocr_lang)
+    except PdfExtractionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    if not result.text.strip():
+        raise HTTPException(status_code=422, detail="No text could be extracted from the PDF.")
+
+    document = Document(
+        owner_id=current_user.id,
+        filename=file.filename or "document.pdf",
+        content=result.text,
     )
     db.add(document)
     await db.commit()

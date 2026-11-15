@@ -52,7 +52,8 @@ jobs:
 
       - name: pgvector kengaytmasini yoqish
         run: |
-          sudo apt-get install -y postgresql-client
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client tesseract-ocr poppler-utils
           PGPASSWORD=password psql -h localhost -U postgres -d knowledge_base_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
       - name: CPU-versiyali torch o'rnatish (tezroq, kichikroq)

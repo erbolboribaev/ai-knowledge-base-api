@@ -1,0 +1,144 @@
+{
+  "documents": [
+    {
+      "id": "refund",
+      "title": "Refund and Returns Policy",
+      "text": "Customers may return most products within 30 days of delivery for a full refund. The item must be unused and in its original packaging. Refunds are issued to the original payment method within 5 to 7 business days after the returned item is received and inspected. Digital products, gift cards and personalized items cannot be returned. If an item arrives damaged, customers must report it within 48 hours and attach photos; the company then sends a free replacement or refunds the full price including shipping. Return shipping is paid by the customer unless the return is caused by a company error. Store credit can be requested instead of a refund and is valid for 12 months."
+    },
+    {
+      "id": "shipping",
+      "title": "Shipping and Delivery",
+      "text": "Standard shipping takes 3 to 5 business days within the country and costs 4.99 dollars. Orders above 50 dollars qualify for free standard shipping. Express shipping delivers in 1 to 2 business days and costs 12.99 dollars. International orders are shipped with tracking and usually arrive in 7 to 14 business days; customers are responsible for import duties and taxes. Orders placed before 2 PM on a business day are dispatched the same day. A tracking number is emailed once the parcel leaves the warehouse. If a parcel is lost in transit, the company reships it at no cost after 14 days without movement."
+    },
+    {
+      "id": "warranty",
+      "title": "Warranty Terms",
+      "text": "All electronic devices come with a 2-year limited warranty covering manufacturing defects. The warranty does not cover water damage, physical damage, unauthorized repairs or normal wear of batteries. Batteries are covered for 6 months only. To make a warranty claim, the customer must provide the order number and proof of purchase. Approved claims are repaired or replaced within 10 business days. Accessories such as cables and cases have a 90-day warranty. The warranty is not transferable when the device is sold to another person."
+    },
+    {
+      "id": "security",
+      "title": "Account Security Guidelines",
+      "text": "Employees must use passwords of at least 14 characters and change them every 180 days. Two-factor authentication is mandatory for email, the VPN and the admin console. Passwords must never be shared or stored in plain text; the company password manager is the only approved storage. Lost or stolen laptops must be reported to the security team within 2 hours so the device can be remotely wiped. Suspicious emails should be forwarded to the phishing mailbox instead of being opened. Access rights are reviewed every quarter and removed on the employee's last working day."
+    },
+    {
+      "id": "leave",
+      "title": "Employee Leave Policy",
+      "text": "Full-time employees receive 20 paid vacation days per year, accrued monthly. Up to 5 unused days can be carried over to the next year. Vacation requests of more than 5 consecutive days must be submitted at least 14 days in advance. Sick leave is paid for up to 10 days per year and a medical certificate is required after 3 consecutive days. Parental leave is 16 weeks at full pay for the primary caregiver and 4 weeks for the other parent. Unpaid leave of up to 3 months may be approved by the department head."
+    },
+    {
+      "id": "onboarding",
+      "title": "Developer Onboarding Guide",
+      "text": "New developers receive a laptop and accounts on their first day. During the first week they complete the security training, set up the local environment with Docker, and pair with a mentor. All code changes go through pull requests and need one approving review before merging. The main branch is protected and deployments run automatically after the continuous integration checks pass. Bugs are tracked in the issue tracker and production incidents are announced in the on-call channel. A new developer is expected to ship a first small change within two weeks."
+    }
+  ],
+  "questions": [
+    {
+      "question": "How many days do I have to return a product?",
+      "relevant_doc": "refund",
+      "reference_answer": "30 days from delivery",
+      "answerable": true
+    },
+    {
+      "question": "How long does it take to get my money back after a return?",
+      "relevant_doc": "refund",
+      "reference_answer": "5 to 7 business days after the item is received and inspected",
+      "answerable": true
+    },
+    {
+      "question": "Can I return a gift card?",
+      "relevant_doc": "refund",
+      "reference_answer": "No, gift cards cannot be returned",
+      "answerable": true
+    },
+    {
+      "question": "How soon must I report a damaged item?",
+      "relevant_doc": "refund",
+      "reference_answer": "Within 48 hours, with photos",
+      "answerable": true
+    },
+    {
+      "question": "How much does standard shipping cost and when is it free?",
+      "relevant_doc": "shipping",
+      "reference_answer": "4.99 dollars; free for orders above 50 dollars",
+      "answerable": true
+    },
+    {
+      "question": "Who pays import duties on international orders?",
+      "relevant_doc": "shipping",
+      "reference_answer": "The customer",
+      "answerable": true
+    },
+    {
+      "question": "What happens if my parcel gets lost?",
+      "relevant_doc": "shipping",
+      "reference_answer": "The company reships it at no cost after 14 days without movement",
+      "answerable": true
+    },
+    {
+      "question": "How long is the warranty on laptops and phones?",
+      "relevant_doc": "warranty",
+      "reference_answer": "2 years limited warranty for electronic devices",
+      "answerable": true
+    },
+    {
+      "question": "Is a battery covered by the warranty for the full period?",
+      "relevant_doc": "warranty",
+      "reference_answer": "No, batteries are covered for 6 months only",
+      "answerable": true
+    },
+    {
+      "question": "How often do employees need to change their passwords?",
+      "relevant_doc": "security",
+      "reference_answer": "Every 180 days",
+      "answerable": true
+    },
+    {
+      "question": "What should I do if my laptop is stolen?",
+      "relevant_doc": "security",
+      "reference_answer": "Report to the security team within 2 hours so it can be remotely wiped",
+      "answerable": true
+    },
+    {
+      "question": "How many vacation days do full-time employees get?",
+      "relevant_doc": "leave",
+      "reference_answer": "20 paid days per year",
+      "answerable": true
+    },
+    {
+      "question": "How much paid sick leave is available and when is a certificate needed?",
+      "relevant_doc": "leave",
+      "reference_answer": "Up to 10 days; certificate after 3 consecutive days",
+      "answerable": true
+    },
+    {
+      "question": "How many approving reviews does a pull request need before merging?",
+      "relevant_doc": "onboarding",
+      "reference_answer": "One approving review",
+      "answerable": true
+    },
+    {
+      "question": "What is the CEO's favorite color?",
+      "relevant_doc": null,
+      "reference_answer": null,
+      "answerable": false
+    },
+    {
+      "question": "What is the company's stock price today?",
+      "relevant_doc": null,
+      "reference_answer": null,
+      "answerable": false
+    },
+    {
+      "question": "How do I cook pasta carbonara?",
+      "relevant_doc": null,
+      "reference_answer": null,
+      "answerable": false
+    },
+    {
+      "question": "Does the company offer a student discount?",
+      "relevant_doc": null,
+      "reference_answer": null,
+      "answerable": false
+    }
+  ]
+}

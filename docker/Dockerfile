@@ -5,6 +5,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
+    tesseract-ocr \
+    tesseract-ocr-rus \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
