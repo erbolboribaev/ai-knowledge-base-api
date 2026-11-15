@@ -125,7 +125,7 @@ async def judge_answer(client, model: str, question: str, reference: str, answer
         model=model,
         messages=[{"role": "user", "content": prompt}],
         temperature=0,
-        max_tokens=3,
+        max_tokens=1024,
     )
     return response.choices[0].message.content.strip().upper().startswith("YES")
 
