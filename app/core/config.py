@@ -23,7 +23,8 @@ class Settings(BaseSettings):
 
     groq_api_key: str
     tavily_api_key: str
-    llm_model: str = "llama-3.3-70b-versatile"
+    llm_model: str = "openai/gpt-oss-120b"
+    vision_model: str = "qwen/qwen3.8-27b"
 
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 

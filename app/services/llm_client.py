@@ -39,7 +39,7 @@ Javob:"""
         ],
         model=settings.llm_model,
         temperature=0.2,
-        max_tokens=800,
+        max_tokens=2000,
     )
 
     return response.choices[0].message.content.strip()
@@ -54,7 +54,7 @@ async def describe_image(base64_image: str, mime_type: str = "image/png") -> str
     client = get_groq_client()
 
     response = await client.chat.completions.create(
-        model="meta-llama/llama-4-scout-17b-16e-instruct",
+        model=settings.vision_model,
         messages=[
             {
                 "role": "user",
@@ -76,7 +76,7 @@ async def describe_image(base64_image: str, mime_type: str = "image/png") -> str
             }
         ],
         temperature=0.2,
-        max_tokens=1024,
+        max_tokens=2048,
     )
 
     return response.choices[0].message.content.strip()
