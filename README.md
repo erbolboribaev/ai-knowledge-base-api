@@ -50,7 +50,7 @@ flowchart TD
 | Authentication | JWT (python-jose, access + refresh tokens) + bcrypt |
 | Rate limiting | slowapi |
 | Embeddings | sentence-transformers (all-MiniLM-L6-v2) |
-| LLM | Groq (llama-3.3-70b-versatile) |
+| LLM | Groq (openai/gpt-oss-120b) |
 | Migrations | Alembic |
 | Testing | pytest, pytest-asyncio, httpx |
 | Containerization | Docker, docker-compose |
@@ -157,6 +157,18 @@ python -m evaluation.run_eval --chunk-size 60 --top-k 3 --json-out evaluation/re
 | MRR | Mean reciprocal rank of the correct document |
 | Abstention rate | Out-of-scope questions for which nothing passes the similarity threshold, so the API answers "no information" instead of hallucinating |
 | Answer accuracy | (`--answers`) LLM judge compares the generated answer with a reference answer |
+
+Latest results (all-MiniLM-L6-v2, chunk size 500, top-k 3, openai/gpt-oss-120b via Groq, 18 labeled questions):
+
+| Metric | Result |
+|---|---|
+| Hit@1 | 0.929 |
+| Hit@3 | 1.000 |
+| MRR | 0.964 |
+| Answer accuracy (LLM judge) | 0.929 |
+| Abstention on out-of-scope questions | 1.000 |
+
+The set is small, so it is used to compare configurations rather than as an absolute quality claim.
 
 Retrieval is computed in memory with the same chunker and embedding model as production, so the numbers reflect those settings; use the script to compare chunk sizes, `top_k`, thresholds, or embedding models before changing them.
 
